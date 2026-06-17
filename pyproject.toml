@@ -1,7 +1,7 @@
 [project]
-name = "clipper-personal-mvp"
+name = "meowlabs-clipper"
 version = "0.1.0"
-description = "Personal MVP for local clip generation"
+description = "Transcript-first web video clipper for Meow Labs"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115.0",
@@ -9,5 +9,6 @@ dependencies = [
   "jinja2>=3.1.4",
   "python-multipart>=0.0.9",
   "imageio-ffmpeg>=0.5.1",
+  "yt-dlp>=2025.6.9",
 ]
 

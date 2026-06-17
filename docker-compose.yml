@@ -1,0 +1,25 @@
+services:
+  clipper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clipper
+    restart: unless-stopped
+    environment:
+      MEOWLABS_API_KEY: ${MEOWLABS_API_KEY:-}
+      CLIPPER_SUGGESTION_CACHE_TTL: ${CLIPPER_SUGGESTION_CACHE_TTL:-180}
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - ./data:/app/data
+      - ./uploads:/app/uploads
+      - ./outputs:/app/outputs
+      - ./transcripts:/app/transcripts
+      - ./cookies:/app/cookies
+      - ./tmp:/app/tmp
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8765/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s

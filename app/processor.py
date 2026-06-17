@@ -79,6 +79,9 @@ def parse_ranges(raw: str) -> list[dict]:
 
 
 def ffmpeg_path() -> str:
+    system_ffmpeg = shutil.which("ffmpeg")
+    if system_ffmpeg:
+        return system_ffmpeg
     return imageio_ffmpeg.get_ffmpeg_exe()
 
 

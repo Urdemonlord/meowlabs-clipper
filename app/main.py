@@ -36,7 +36,10 @@ OUTPUTS_DIR = ROOT / "outputs"
 UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
 
-app = FastAPI(title="Clipper Personal MVP")
+APP_NAME = "Clipper"
+
+
+app = FastAPI(title=APP_NAME)
 app.mount("/downloads", StaticFiles(directory=str(OUTPUTS_DIR)), name="downloads")
 app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
 
@@ -151,8 +154,14 @@ def render_home(
         clips = db.list_clips_for_job(job["id"])
         clip_links = []
         for clip in clips:
-            rel = Path(clip["output_path"]).relative_to(OUTPUTS_DIR).as_posix()
-            clip_links.append(f"<a href='/downloads/{rel}'>{Path(clip['output_path']).name}</a>")
+            clip_path = Path(clip["output_path"])
+            clip_name = html.escape(clip_path.name)
+            try:
+                rel = clip_path.relative_to(OUTPUTS_DIR).as_posix()
+            except ValueError:
+                clip_links.append(clip_name)
+                continue
+            clip_links.append(f"<a href='/downloads/{rel}'>{clip_name}</a>")
         clip_links_html = "<br>".join(clip_links) or "-"
         error_block = f"<div style='color:#fca5a5;margin-top:6px'>{html.escape(job['error'])}</div>" if job["error"] else ""
         job_rows.append(
@@ -281,7 +290,7 @@ def render_home(
 <html>
 <head>
   <meta charset='utf-8'>
-  <title>Clipper Personal MVP</title>
+  <title>{APP_NAME}</title>
   <style>
     body {{ font-family: Arial, sans-serif; margin: 24px; background: #0b1220; color: #e5e7eb; }}
     .card {{ background: #111827; padding: 20px; border-radius: 12px; margin-bottom: 18px; }}
@@ -305,8 +314,8 @@ def render_home(
   </style>
 </head>
 <body>
-  <h1>Clipper Personal MVP</h1>
-  <p class='muted'>Upload video lokal atau simpan source YouTube dalam mode transcript-first, lalu potong clip manual dari browser.</p>
+  <h1>{APP_NAME}</h1>
+  <p class='muted'>Transcript-first video clipper buat potong source lokal atau YouTube dari satu panel web yang ringan.</p>
   {error_html}
 
   <div class='grid'>

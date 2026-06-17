@@ -1,0 +1,17 @@
+[Unit]
+Description=Clipper web app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=meowlabs
+WorkingDirectory=/home/meowlabs/clipper-personal-mvp
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=-/home/meowlabs/clipper-personal-mvp/.env
+ExecStart=/home/meowlabs/.local/bin/uv run uvicorn app.main:app --host 127.0.0.1 --port 8765
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
