@@ -346,7 +346,30 @@ def render_home(
   .card h2 {{ font-family:var(--font-mono); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent-pink); margin-bottom:16px; }}
   .card h3 {{ font-family:var(--font-sans); font-size:15px; font-weight:500; color:var(--text-primary); margin-bottom:8px; }}
   .action-grid {{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:24px; }}
-  @media (max-width:768px) {{ .action-grid {{ grid-template-columns:1fr; }} .topbar {{ flex-direction:column; height:auto; padding:12px 16px; gap:8px; }} }}
+  @media (max-width:768px) {{
+    .action-grid {{ grid-template-columns:1fr; gap:12px; margin-bottom:18px; }}
+    .topbar {{ flex-wrap:wrap; height:auto; min-height:52px; padding:10px 16px; }}
+    .topbar .logo {{ font-size:15px; }}
+    .nav-end {{ gap:4px; flex-wrap:wrap; }}
+    .nav-end .badge {{ font-size:9px; padding:1px 7px; }}
+    .content {{ padding:16px; }}
+    .card {{ padding:16px; }}
+    .card h2 {{ font-size:11px; margin-bottom:12px; }}
+    table {{ font-size:13px; }}
+    thead th, tbody td {{ padding:7px 8px; }}
+    input, select, textarea, button {{ padding:11px 14px; font-size:15px; min-height:44px; }}
+    label {{ font-size:14px; }}
+    video {{ max-width:100%; }}
+    .clip-actions a {{ font-size:15px; padding:8px 0; }}
+    .err-banner {{ font-size:13px; padding:12px 14px; }}
+  }}
+  @media (max-width:400px) {{
+    .topbar {{ min-height:auto; padding:8px 12px; }}
+    .content {{ padding:12px; }}
+    .card {{ padding:12px; }}
+    .nav-end .badge {{ font-size:8px; padding:1px 5px; }}
+    thead th, tbody td {{ padding:5px 6px; font-size:12px; }}
+  }}
   input, select, textarea, button {{ width:100%; padding:10px 14px; font-family:var(--font-sans); font-size:14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); outline:none; transition:all 0.2s ease; }}
   input:focus, select:focus, textarea:focus {{ border-color:var(--accent-blue); box-shadow:0 0 0 3px rgba(37,99,235,0.15); }}
   button {{ background:var(--accent-blue); border-color:var(--accent-blue); font-weight:600; cursor:pointer; margin-top:12px; }}
