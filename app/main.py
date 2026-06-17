@@ -157,12 +157,27 @@ def render_home(
             clip_path = Path(clip["output_path"])
             clip_name = html.escape(clip_path.name)
             try:
-                rel = clip_path.relative_to(OUTPUTS_DIR).as_posix()
+                rel = html.escape(clip_path.relative_to(OUTPUTS_DIR).as_posix())
             except ValueError:
                 clip_links.append(clip_name)
                 continue
-            clip_links.append(f"<a href='/downloads/{rel}'>{clip_name}</a>")
-        clip_links_html = "<br>".join(clip_links) or "-"
+            clip_links.append(
+                f"""
+                <div style='margin-bottom:14px'>
+                  <div><strong>{clip_name}</strong></div>
+                  <video controls preload='metadata' style='width:100%;max-width:320px;margin-top:8px;border-radius:10px;background:#000'>
+                    <source src='/downloads/{rel}' type='video/mp4'>
+                    Browser kamu tidak support preview video.
+                  </video>
+                  <div style='margin-top:6px'>
+                    <a href='/downloads/{rel}' target='_blank' rel='noopener'>lihat</a>
+                    &nbsp;·&nbsp;
+                    <a href='/downloads/{rel}' download='{clip_name}'>download</a>
+                  </div>
+                </div>
+                """
+            )
+        clip_links_html = "".join(clip_links) or "-"
         error_block = f"<div style='color:#fca5a5;margin-top:6px'>{html.escape(job['error'])}</div>" if job["error"] else ""
         job_rows.append(
             f"<tr><td>{job['id']}</td><td>{html.escape(job['source_title'])}</td><td>{job['status']}</td><td><code>{html.escape(job['clip_ranges_json'])}</code>{error_block}</td><td>{clip_links_html}</td></tr>"
