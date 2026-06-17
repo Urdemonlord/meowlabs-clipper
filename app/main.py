@@ -300,136 +300,190 @@ def render_home(
     if llm["ready"]:
         provider_label = "Meow Labs" if llm.get("provider") == "meowlabs" else (llm.get("provider") or "custom")
         llm_summary = f"aktif via {html.escape(provider_label)} ({html.escape(llm['model'])})"
+    llm_badge = f"<span class='badge badge-success'>LLM: {html.escape(llm_summary)}</span>" if llm['ready'] else "<span class='badge badge-muted'>LLM: tidak siap</span>"
+    cook_badge = f"<span class='badge badge-success'>cookies: {cookies_summary}</span>" if cookies_status['exists'] else "<span class='badge badge-muted'>cookies: off</span>"
+    error_nav_html = f"{llm_badge} {cook_badge}"
 
     return f"""<!doctype html>
 <html>
 <head>
   <meta charset='utf-8'>
   <title>{APP_NAME}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body {{ font-family: Arial, sans-serif; margin: 24px; background: #0b1220; color: #e5e7eb; }}
-    .card {{ background: #111827; padding: 20px; border-radius: 12px; margin-bottom: 18px; }}
-    input, textarea, select, button {{ width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #374151; background: #0f172a; color: #e5e7eb; box-sizing: border-box; }}
-    button {{ background: #2563eb; cursor: pointer; font-weight: 700; }}
-    button.secondary {{ background: #1d4ed8; }}
-    button.danger {{ background: #7f1d1d; }}
-    table {{ width: 100%; border-collapse: collapse; }}
-    td, th {{ border-bottom: 1px solid #1f2937; padding: 8px; text-align: left; vertical-align: top; }}
-    a {{ color: #60a5fa; word-break: break-all; }}
-    code {{ white-space: pre-wrap; }}
-    .grid {{ display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }}
-    .muted {{ color: #94a3b8; }}
-    .inline-check {{ display:flex; align-items:center; gap:8px; margin-top:10px; }}
-    .inline-check input {{ width:auto; margin:0; }}
-    .badge {{ display:inline-block; padding:2px 8px; border-radius:999px; font-size:12px; font-weight:700; margin-right:6px; margin-top:4px; }}
-    .badge-success {{ background:#14532d; color:#bbf7d0; border:1px solid #166534; }}
-    .badge-warn {{ background:#78350f; color:#fde68a; border:1px solid #92400e; }}
-    .badge-info {{ background:#1e3a8a; color:#bfdbfe; border:1px solid #1d4ed8; }}
-    .badge-muted {{ background:#374151; color:#e5e7eb; border:1px solid #4b5563; }}
+    :root {{
+    --bg-primary: #0a0e1a;
+    --bg-card: #0f1729;
+    --bg-card-hover: #141e33;
+    --bg-input: #0a0e1a;
+    --border: rgba(255,255,255,0.06);
+    --border-hover: rgba(255,255,255,0.12);
+    --text-primary: #f1f5f9;
+    --text-secondary: #8892b0;
+    --text-muted: #556080;
+    --accent-pink: #ec4899;
+    --accent-blue: #2563eb;
+    --accent-green: #22c55e;
+    --accent-red: #ef4444;
+    --accent-amber: #f59e0b;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --font-sans: 'Fira Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'Fira Code', 'JetBrains Mono', monospace;
+  }}
+  * {{ margin:0; padding:0; box-sizing:border-box; }}
+  body {{ font-family:var(--font-sans); background:var(--bg-primary); color:var(--text-primary); min-height:100dvh; line-height:1.6; }}
+  .topbar {{ display:flex; align-items:center; justify-content:space-between; padding:0 24px; height:60px; border-bottom:1px solid var(--border); background:var(--bg-card); position:sticky; top:0; z-index:50; }}
+  .logo {{ font-family:var(--font-mono); font-weight:700; font-size:17px; color:var(--accent-pink); letter-spacing:-0.02em; display:flex; align-items:center; gap:8px; }}
+  .logo::before {{ content:"\u2726"; }}
+  .nav-end {{ display:flex; align-items:center; gap:8px; }}
+  .content {{ max-width:1400px; margin:0 auto; padding:24px; }}
+  .card {{ background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px; transition:border-color 0.2s ease; }}
+  .card:hover {{ border-color:var(--border-hover); }}
+  .card h2 {{ font-family:var(--font-mono); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent-pink); margin-bottom:16px; }}
+  .card h3 {{ font-family:var(--font-sans); font-size:15px; font-weight:500; color:var(--text-primary); margin-bottom:8px; }}
+  .action-grid {{ display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; margin-bottom:24px; }}
+  @media (max-width:768px) {{ .action-grid {{ grid-template-columns:1fr; }} .topbar {{ flex-direction:column; height:auto; padding:12px 16px; gap:8px; }} }}
+  input, select, textarea, button {{ width:100%; padding:10px 14px; font-family:var(--font-sans); font-size:14px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg-input); color:var(--text-primary); outline:none; transition:all 0.2s ease; }}
+  input:focus, select:focus, textarea:focus {{ border-color:var(--accent-blue); box-shadow:0 0 0 3px rgba(37,99,235,0.15); }}
+  button {{ background:var(--accent-blue); border-color:var(--accent-blue); font-weight:600; cursor:pointer; margin-top:12px; }}
+  button:hover {{ background:#1d4ed8; border-color:#1d4ed8; }}
+  button:active {{ transform:scale(0.985); }}
+  button.secondary {{ background:transparent; border-color:var(--border); color:var(--text-secondary); }}
+  button.secondary:hover {{ border-color:var(--text-muted); color:var(--text-primary); }}
+  button.danger {{ background:transparent; border-color:var(--accent-red); color:var(--accent-red); }}
+  button.danger:hover {{ background:rgba(239,68,68,0.1); }}
+  label {{ display:block; font-size:13px; font-weight:500; color:var(--text-secondary); margin-top:14px; margin-bottom:4px; }}
+  label:first-child {{ margin-top:0; }}
+  .inline-check {{ display:flex; align-items:center; gap:8px; margin-top:14px; }}
+  .inline-check input {{ width:auto; margin:0; }}
+  .table-wrap {{ overflow-x:auto; }}
+  table {{ width:100%; border-collapse:collapse; font-size:14px; }}
+  thead th {{ text-align:left; padding:10px 12px; font-family:var(--font-mono); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); border-bottom:1px solid var(--border); }}
+  tbody td {{ padding:10px 12px; border-bottom:1px solid var(--border); vertical-align:top; color:var(--text-primary); }}
+  tbody tr:hover td {{ background:rgba(255,255,255,0.02); }}
+  .badge {{ display:inline-flex; align-items:center; padding:2px 10px; border-radius:999px; font-size:11px; font-weight:600; font-family:var(--font-mono); letter-spacing:0.02em; }}
+  .badge-success {{ background:rgba(34,197,94,0.12); color:var(--accent-green); border:1px solid rgba(34,197,94,0.25); }}
+  .badge-warn {{ background:rgba(245,158,11,0.12); color:var(--accent-amber); border:1px solid rgba(245,158,11,0.25); }}
+  .badge-info {{ background:rgba(37,99,235,0.12); color:var(--accent-blue); border:1px solid rgba(37,99,235,0.25); }}
+  .badge-muted {{ background:rgba(255,255,255,0.04); color:var(--text-muted); border:1px solid var(--border); }}
+  a {{ color:var(--accent-blue); text-decoration:none; transition:color 0.2s ease; }}
+  a:hover {{ color:var(--accent-pink); }}
+  code {{ font-family:var(--font-mono); font-size:13px; background:rgba(255,255,255,0.04); padding:2px 6px; border-radius:4px; }}
+  .muted {{ color:var(--text-secondary); font-size:13px; }}
+  section.card {{ margin-bottom:24px; }}
+  .err-banner {{ background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; padding:14px 18px; border-radius:var(--radius-md); margin-bottom:24px; font-size:14px; }}
+  .clip-block {{ margin-bottom:14px; }}
+  .clip-block:last-child {{ margin-bottom:0; }}
+  .clip-actions {{ display:flex; gap:10px; margin-top:6px; }}
+  .clip-actions a {{ font-size:13px; font-weight:500; display:inline-flex; align-items:center; gap:4px; }}
+  video {{ width:100%; max-width:280px; border-radius:var(--radius-sm); background:#000; }}
   </style>
 </head>
 <body>
-  <h1>{APP_NAME}</h1>
-  <p class='muted'>Transcript-first video clipper buat potong source lokal atau YouTube dari satu panel web yang ringan.</p>
-  {error_html}
-
-  <div class='grid'>
-    <div class='card'>
-      <h2>Upload source video</h2>
-      <form action='/sources/upload' method='post' enctype='multipart/form-data'>
-        <label>Judul</label>
-        <input name='title' placeholder='contoh: podcast-episode-12' required>
-        <label>File video</label>
-        <input type='file' name='video' accept='video/*' required>
-        <button type='submit'>Upload source</button>
-      </form>
+  <nav class="topbar">
+    <div class="logo">{APP_NAME}</div>
+    <div class="nav-end">{error_nav_html}</div>
+  </nav>
+  <div class="content">
+    {error_html}
+    <div class="action-grid">
+      <div class="card">
+        <h2>Upload source</h2>
+        <form action='/sources/upload' method='post' enctype='multipart/form-data'>
+          <label>Judul</label>
+          <input name='title' placeholder='contoh: podcast-episode-12' required>
+          <label>File video</label>
+          <input type='file' name='video' accept='video/*' required>
+          <button type='submit'>Upload</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>YouTube URL</h2>
+        <form action='/sources/youtube' method='post'>
+          <label>URL</label>
+          <input name='url' placeholder='https://www.youtube.com/watch?v=...' required>
+          <label>Override judul</label>
+          <input name='title' placeholder='biarkan kosong untuk pakai judul video'>
+          <button type='submit'>Simpan source</button>
+        </form>
+        <form action='/youtube/preview' method='post' style='margin-top:12px'>
+          <label>Preview</label>
+          <input name='url' placeholder='https://www.youtube.com/watch?v=...' required>
+          <button type='submit' class='secondary'>Preview dulu</button>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Clip manual</h2>
+        <form action='/jobs' method='post'>
+          <label>Pilih source</label>
+          <select name='source_id' required>{source_options}</select>
+          <label>Range per baris</label>
+          <textarea name='clip_ranges' rows='8' placeholder='00:00:02-00:00:06&#10;00:00:07-00:00:10' required></textarea>
+          <button type='submit'>Proses</button>
+        </form>
+      </div>
     </div>
-
-    <div class='card'>
-      <h2>Ingest YouTube URL</h2>
-      <form action='/sources/youtube' method='post'>
-        <label>URL YouTube</label>
-        <input name='url' placeholder='https://www.youtube.com/watch?v=...' required>
-        <label>Override judul (opsional)</label>
-        <input name='title' placeholder='biarkan kosong untuk pakai judul video'>
-        <button type='submit'>Simpan transcript-first source</button>
-      </form>
-      <form action='/youtube/preview' method='post' style='margin-top:14px'>
-        <label>Preview metadata + transcript</label>
-        <input name='url' placeholder='https://www.youtube.com/watch?v=...' required>
-        <button type='submit' class='secondary'>Preview dulu</button>
-      </form>
+    <div class='action-grid'>
+      <div class='card'>
+        <h2>YouTube cookies</h2>
+        <p class='muted' style='margin-bottom:10px'>Status: {cookies_summary} &middot; {html.escape(cookies_status['name']) if cookies_status['exists'] else '-'} &middot; {cookies_status['size']} bytes</p>
+        <form action='/settings/youtube-cookies' method='post' enctype='multipart/form-data'>
+          <label>Upload cookies.txt</label>
+          <input type='file' name='cookies_file' accept='.txt,text/plain' required>
+          <button type='submit'>Upload</button>
+        </form>
+        <form action='/settings/youtube-cookies/delete' method='post' style='margin-top:10px'>
+          <button type='submit' class='danger'>Hapus cookies</button>
+        </form>
+      </div>
+      <div class='card'>
+        <h2>Auto Suggest</h2>
+        <form action='/sources/suggest' method='post'>
+          <label>Pilih source</label>
+          <select name='source_id' required>{source_options}</select>
+          <label>Panjang clip (detik)</label>
+          <input type='number' name='clip_length' min='5' max='120' value='30' required>
+          <label class='inline-check'><input type='checkbox' name='use_ai' value='1'> AI rerank</label>
+          <p class='muted' style='margin-bottom:6px'>LLM: {llm_summary}</p>
+          <button type='submit' class='secondary'>Generate</button>
+        </form>
+      </div>
+      <div class='card'>
+        <h2>Transcript Search</h2>
+        <form action='/sources/search' method='post'>
+          <label>Pilih source</label>
+          <select name='source_id' required>{source_options}</select>
+          <label>Keyword</label>
+          <input name='query' placeholder='contoh: never gonna' required>
+          <button type='submit' class='secondary'>Cari</button>
+        </form>
+      </div>
     </div>
-
-    <div class='card'>
-      <h2>Buat clip job manual</h2>
-      <form action='/jobs' method='post'>
-        <label>Pilih source</label>
-        <select name='source_id' required>{source_options}</select>
-        <label>Range per baris</label>
-        <textarea name='clip_ranges' rows='8' placeholder='00:00:02-00:00:06&#10;00:00:07-00:00:10' required></textarea>
-        <button type='submit'>Proses clip</button>
-      </form>
-    </div>
-  </div>
-
-  <div class='grid'>
-    <div class='card'>
-      <h2>YouTube cookies</h2>
-      <p class='muted'>Status: {cookies_summary} · file: {html.escape(cookies_status['name']) if cookies_status['exists'] else '-'} · size: {cookies_status['size']} bytes</p>
-      <form action='/settings/youtube-cookies' method='post' enctype='multipart/form-data'>
-        <label>Upload cookies.txt</label>
-        <input type='file' name='cookies_file' accept='.txt,text/plain' required>
-        <button type='submit'>Upload / replace cookies</button>
-      </form>
-      <form action='/settings/youtube-cookies/delete' method='post' style='margin-top:12px'>
-        <button type='submit' class='danger'>Hapus cookies</button>
-      </form>
-    </div>
-
-    <div class='card'>
-      <h2>Auto Suggest</h2>
-      <form action='/sources/suggest' method='post'>
-        <label>Pilih source</label>
-        <select name='source_id' required>{source_options}</select>
-        <label>Panjang clip (detik)</label>
-        <input type='number' name='clip_length' min='5' max='120' value='30' required>
-        <label class='inline-check'><input type='checkbox' name='use_ai' value='1'> AI rerank suggestion</label>
-        <p class='muted'>LLM: {llm_summary}</p>
-        <button type='submit' class='secondary'>Generate suggestion</button>
-      </form>
-    </div>
-
-    <div class='card'>
-      <h2>Transcript Search</h2>
-      <form action='/sources/search' method='post'>
-        <label>Pilih source</label>
-        <select name='source_id' required>{source_options}</select>
-        <label>Keyword</label>
-        <input name='query' placeholder='contoh: never gonna' required>
-        <button type='submit' class='secondary'>Cari di transcript</button>
-      </form>
-    </div>
-  </div>
-
-  {preview_html}
-  {suggestion_html}
-  {search_html}
-
-  <div class='card'>
-    <h2>Sources</h2>
-    <table>
-      <thead><tr><th>ID</th><th>Title</th><th>Kind</th><th>Duration</th><th>Metadata</th><th>File</th></tr></thead>
-      <tbody>{source_rows_html}</tbody>
-    </table>
-  </div>
-
-  <div class='card'>
-    <h2>Jobs</h2>
-    <table>
-      <thead><tr><th>ID</th><th>Source</th><th>Status</th><th>Ranges / Error</th><th>Output</th></tr></thead>
-      <tbody>{job_rows_html}</tbody>
-    </table>
+    {preview_html}
+    {suggestion_html}
+    {search_html}
+    <section class='card'>
+      <h2>Sources</h2>
+      <div class='table-wrap'>
+        <table>
+          <thead><tr><th>ID</th><th>Title</th><th>Kind</th><th>Dur</th><th>Meta</th><th>File</th></tr></thead>
+          <tbody>{source_rows_html}</tbody>
+        </table>
+      </div>
+    </section>
+    <section class='card'>
+      <h2>Jobs</h2>
+      <div class='table-wrap'>
+        <table>
+          <thead><tr><th>ID</th><th>Source</th><th>Status</th><th>Ranges / Error</th><th>Output</th></tr></thead>
+          <tbody>{job_rows_html}</tbody>
+        </table>
+      </div>
+    </section>
   </div>
 </body>
 </html>"""
